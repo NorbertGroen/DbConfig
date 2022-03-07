@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using DbConfig.Models;
 using DbConfig.Providers;
 using Microsoft.Extensions.Configuration;
@@ -28,20 +29,7 @@ namespace CustomProvider.Example.Providers
         static IDictionary<string, string> CreateAndSaveDefaultValues(
             EntityConfigurationContext context)
         {
-            var widgetOptionSetting = new Dictionary<string, string>(
-                StringComparer.OrdinalIgnoreCase)
-            {
-                ["WidgetOptions:EndpointId"] = "b3da3c4c-9c4e-4411-bc4d-609e2dcc5c67",
-                ["WidgetOptions:DisplayLabel"] = "Widgets Incorporated, LLC.",
-                ["WidgetOptions:WidgetRoute"] = "api/widgets"
-            };
-
-
-            context.Settings.AddRange(
-                widgetOptionSetting.Select(kvp => new Settings(kvp.Key, kvp.Value))
-                        .ToArray());
-
-            var AosCodes = new AosCodes
+            var aosCodes = new AosCodes
             {
                 [Wet.WW] =
                 new AosCode
@@ -61,45 +49,41 @@ namespace CustomProvider.Example.Providers
             var aosWettenSetting = new Dictionary<string, string>(
                 StringComparer.OrdinalIgnoreCase)
             {
-                [$"Aos:{Wet.WWF}:Applicatie"] = "WWF applicatie",
-                [$"Aos:{Wet.WWF}:Onderwerp"] = "WWF onderwerp",
-                [$"Aos:{Wet.WWF}:Subonderwerp"] = "WWF subonderwerp",
-                [$"Aos:{Wet.IOW}:Applicatie"] = "IOW applicatie",
-                [$"Aos:{Wet.IOW}:Onderwerp"] = "IOW onderwerp",
-                [$"Aos:{Wet.IOW}:Subonderwerp"] = "IOW subonderwerp",
+                [$"AosCode:{Wet.WWF}:Applicatie"] = "WWF applicatie",
+                [$"AosCode:{Wet.WWF}:Onderwerp"] = "WWF onderwerp",
+                [$"AosCode:{Wet.WWF}:Subonderwerp"] = "WWF subonderwerp",
+                [$"AosCode:{Wet.IOW}:Applicatie"] = "IOW applicatie",
+                [$"AosCode:{Wet.IOW}:Onderwerp"] = "IOW onderwerp",
+                [$"AosCode:{Wet.IOW}:Subonderwerp"] = "IOW subonderwerp",
             };
             context.Settings.AddRange(
              aosWettenSetting
              .Select(kvp => new Settings(kvp.Key, kvp.Value))
              .ToArray());
             context.Settings.AddRange(
-                GetSettingsArray(AosCodes)
+                GetSettings(aosCodes)
             );
 
             context.SaveChanges();
 
-            return widgetOptionSetting.Merge(aosWettenSetting).Merge(GetDictionary(AosCodes));
+            return aosWettenSetting.Merge(GetDictionary(aosCodes));
         }
 
-        private static Dictionary<string, string> GetDictionary(AosCodes AosCodes)
+        private static IEnumerable<KeyValuePair<string, string>> ParseDictionary<T, Y>(Dictionary<T, Y> dictionary)
         {
-            return AosCodes.Select(d => new Dictionary<string, string>
-            {
-                [$"Aos:{d.Key}:Applicatie"]= d.Value.Applicatie,
-                [$"Aos:{d.Key}:Onderwerp"]= d.Value.Onderwerp,
-                [$"Aos:{d.Key}:Subonderwerp"]= d.Value.Subonderwerp
-            }).SelectMany(i => i).ToDictionary(a => a.Key, a => a.Value, StringComparer.OrdinalIgnoreCase);
+            return dictionary.Select(element => element.Value.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                               .ToDictionary(prop => $"{typeof(Y).Name}:{element.Key}:{prop.Name}"
+                               , prop => prop.GetValue(element.Value).ToString()
+                               , null)).SelectMany(i => i);
+        }
+        private static Dictionary<string, string> GetDictionary<T, Y>(Dictionary<T, Y> dictionary)
+        {
+            return ParseDictionary(dictionary).ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
         }
 
-
-        private static Settings[] GetSettingsArray(AosCodes AosCodes)
+        private static Settings[] GetSettings<T, Y>(Dictionary<T, Y> dictionary)
         {
-            return AosCodes.Select(d => new Settings[]
-            {
-                new Settings(id: $"Aos:{d.Key}:Applicatie", value: d.Value.Applicatie),
-                new Settings(id: $"Aos:{d.Key}:Onderwerp", value: d.Value.Onderwerp),
-                new Settings(id: $"Aos:{d.Key}:Subonderwerp", value: d.Value.Subonderwerp)
-            }).SelectMany(i => i).ToArray();
+            return ParseDictionary(dictionary).Select(kvp => new Settings(id: kvp.Key, value: kvp.Value)).ToArray();
         }
     }
 

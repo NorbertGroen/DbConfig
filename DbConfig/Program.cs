@@ -24,14 +24,10 @@ namespace DbConfig
                 })
                 .ConfigureServices((context, services) =>
                 {
-                    services.Configure<WidgetOptions>(
-                        context.Configuration.GetSection("WidgetOptions"));
-
                     services.Configure<AosCodes>(
-                        context.Configuration.GetSection("Aos"));
+                        context.Configuration.GetSection("AosCode"));
                 })
                 .Build();
-            TestWidgetOptions(host);
             TestAosOptions(host);
 
             await host.RunAsync();
@@ -45,17 +41,5 @@ namespace DbConfig
             Console.WriteLine($"WW subonderwerp={options[Wet.WW].Subonderwerp}");
 
         }
-
-        private static void TestWidgetOptions(IHost host)
-        {
-            var options = host.Services.GetRequiredService<IOptions<WidgetOptions>>().Value;
-            Console.WriteLine($"DisplayLabel={options.DisplayLabel}");
-            Console.WriteLine($"EndpointId={options.EndpointId}");
-            Console.WriteLine($"WidgetRoute={options.WidgetRoute}");
-        }
     }
 }
-// Sample output:
-//    WidgetRoute=api/widgets
-//    EndpointId=b3da3c4c-9c4e-4411-bc4d-609e2dcc5c67
-//    DisplayLabel=Widgets Incorporated, LLC.
