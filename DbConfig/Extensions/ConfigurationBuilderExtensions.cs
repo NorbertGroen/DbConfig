@@ -10,7 +10,7 @@ namespace DbConfig.Extensions.Configuration
         {
             var tempConfig = builder.Build();
             var connectionString =
-                tempConfig.GetConnectionString("WidgetConnectionString");
+                tempConfig.GetConnectionString("DefaultConnectionString");
 
             return builder.Add(new EntityConfigurationSource(connectionString));
         }

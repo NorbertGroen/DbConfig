@@ -1,13 +1,10 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using DbConfig.Extensions.Configuration;
+using DbConfig.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using CustomProvider.Example;
-using DbConfig.Extensions.Configuration;
-using DbConfig.Models;
 using System;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace DbConfig
 {
@@ -20,7 +17,6 @@ namespace DbConfig
                 {
                     configuration.Sources.Clear();
                     configuration.AddEntityConfiguration();
-                    configuration.AddInMemoryCollection();
                 })
                 .ConfigureServices((context, services) =>
                 {

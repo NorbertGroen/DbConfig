@@ -1,12 +1,11 @@
-﻿using System;
+﻿using DbConfig.Extensions;
+using DbConfig.Models;
+using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using DbConfig.Models;
-using DbConfig.Providers;
-using Microsoft.Extensions.Configuration;
 
-namespace CustomProvider.Example.Providers
+namespace DbConfig.Providers
 {
     public class EntityConfigurationProvider : ConfigurationProvider
     {
@@ -60,39 +59,11 @@ namespace CustomProvider.Example.Providers
              aosWettenSetting
              .Select(kvp => new Settings(kvp.Key, kvp.Value))
              .ToArray());
-            context.Settings.AddRange(
-                GetSettings(aosCodes)
-            );
+            context.Settings.AddRange(aosCodes.GetSettings());
 
             context.SaveChanges();
 
-            return aosWettenSetting.Merge(GetDictionary(aosCodes));
-        }
-
-        private static IEnumerable<KeyValuePair<string, string>> ParseDictionary<T, Y>(Dictionary<T, Y> dictionary)
-        {
-            return dictionary.Select(element => element.Value.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                               .ToDictionary(prop => $"{typeof(Y).Name}:{element.Key}:{prop.Name}"
-                               , prop => prop.GetValue(element.Value).ToString()
-                               , null)).SelectMany(i => i);
-        }
-        private static Dictionary<string, string> GetDictionary<T, Y>(Dictionary<T, Y> dictionary)
-        {
-            return ParseDictionary(dictionary).ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
-        }
-
-        private static Settings[] GetSettings<T, Y>(Dictionary<T, Y> dictionary)
-        {
-            return ParseDictionary(dictionary).Select(kvp => new Settings(id: kvp.Key, value: kvp.Value)).ToArray();
-        }
-    }
-
-    public static class ExtensionMethods
-    {
-        public static IDictionary<TKey, TValue> Merge<TKey, TValue>(this IDictionary<TKey, TValue> dictA, IDictionary<TKey, TValue> dictB)
-            where TValue : class
-        {
-            return dictA.Keys.Union(dictB.Keys).ToDictionary(k => k, k => dictA.ContainsKey(k) ? dictA[k] : dictB[k]);
+            return aosWettenSetting.Merge(aosCodes.GetDictionary());
         }
     }
 }
