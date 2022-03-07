@@ -44,12 +44,12 @@ namespace CustomProvider.Example.Providers
             var aosWettenSetting = new Dictionary<string, string>(
                 StringComparer.OrdinalIgnoreCase)
             {
-                ["AosWet:WW:Applicatie"] = "Naam van de WW applicatie",
-                ["AosWet:WW:Onderwerp"] = "Naam van het WW onderwerp",
-                ["AosWet:WW:SubOnderwerpnderwerp"] = "Naam van het WW subonderwerp",
-                ["AosWet:IOW:Applicatie"] = "Naam van de IOW applicatie",
-                ["AosWet:IOW:Onderwerp"] = "Naam van het IOW onderwerp",
-                ["AosWet:IOW:SubOnderwerpnderwerp"] = "Naam van het IOW subonderwerp",
+                [$"Aos:{Wet.WW}:Applicatie"] = "WW applicatie",
+                [$"Aos:{Wet.WW}:Onderwerp"] = "WW onderwerp",
+                [$"Aos:{Wet.WW}:Subonderwerp"] = "WW subonderwerp",
+                [$"Aos:{Wet.IOW}:Applicatie"] = "IOW applicatie",
+                [$"Aos:{Wet.IOW}:Onderwerp"] = "IOW onderwerp",
+                [$"Aos:{Wet.IOW}:Subonderwerp"] = "IOW subonderwerp",
             };
             context.Settings.AddRange(
              aosWettenSetting
@@ -58,7 +58,16 @@ namespace CustomProvider.Example.Providers
 
             context.SaveChanges();
 
-            return widgetOptionSetting;
+            return widgetOptionSetting.Merge(aosWettenSetting);
+        }
+    }
+
+    public static class ExtensionMethods 
+    { 
+        public static IDictionary<TKey, TValue> Merge<TKey, TValue>(this IDictionary<TKey, TValue> dictA, IDictionary<TKey, TValue> dictB)
+            where TValue : class
+        {
+            return dictA.Keys.Union(dictB.Keys).ToDictionary(k => k, k => dictA.ContainsKey(k) ? dictA[k] : dictB[k]);
         }
     }
 }

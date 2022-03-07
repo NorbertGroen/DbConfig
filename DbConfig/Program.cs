@@ -20,27 +20,31 @@ namespace DbConfig
                 {
                     configuration.Sources.Clear();
                     configuration.AddEntityConfiguration();
+                    configuration.AddInMemoryCollection();
                 })
                 .ConfigureServices((context, services) =>
                 {
                     services.Configure<WidgetOptions>(
                         context.Configuration.GetSection("WidgetOptions"));
 
-                    services.Configure<IEnumerable<AosWet>>(
-                        context.Configuration.GetSection("WidgetOptions"));
+                    services.Configure<AosCodes>(
+                        context.Configuration.GetSection("Aos"));
                 })
                 .Build();
             TestWidgetOptions(host);
-            //TestAosOptions(host);
+            TestAosOptions(host);
 
             await host.RunAsync();
         }
 
-        //private static void TestAosOptions(IHost host)
-        //{
-        //    var options = host.Services.GetRequiredService<IOptions<IEnumerable<AosWet>>();
-            
-        //}
+        private static void TestAosOptions(IHost host)
+        {
+            var options = host.Services.GetRequiredService<IOptions<AosCodes>>().Value;
+            Console.WriteLine($"WW applicatie={options[Wet.WW].Applicatie}");
+            Console.WriteLine($"WW onderwerp={options[Wet.WW].Onderwerp}");
+            Console.WriteLine($"WW subonderwerp={options[Wet.WW].Subonderwerp}");
+
+        }
 
         private static void TestWidgetOptions(IHost host)
         {
