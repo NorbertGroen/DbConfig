@@ -83,12 +83,12 @@ namespace CustomProvider.Example.Providers
 
         private static Dictionary<string, string> GetDictionary(AosCodes AosCodes)
         {
-            return AosCodes.Select(d => new (string, string)[]
+            return AosCodes.Select(d => new Dictionary<string, string>
             {
-                ($"Aos:{d.Key}:Applicatie", d.Value.Applicatie),
-                ($"Aos:{d.Key}:Onderwerp" , d.Value.Onderwerp),
-                ($"Aos:{d.Key}:Subonderwerp" , d.Value.Subonderwerp)
-            }).SelectMany(i => i).ToDictionary(a => a.Item1, a => a.Item2, StringComparer.OrdinalIgnoreCase);
+                [$"Aos:{d.Key}:Applicatie"]= d.Value.Applicatie,
+                [$"Aos:{d.Key}:Onderwerp"]= d.Value.Onderwerp,
+                [$"Aos:{d.Key}:Subonderwerp"]= d.Value.Subonderwerp
+            }).SelectMany(i => i).ToDictionary(a => a.Key, a => a.Value, StringComparer.OrdinalIgnoreCase);
         }
 
 
