@@ -41,12 +41,29 @@ namespace CustomProvider.Example.Providers
                 widgetOptionSetting.Select(kvp => new Settings(kvp.Key, kvp.Value))
                         .ToArray());
 
+            var AosCodes = new AosCodes
+            {
+                [Wet.WW] =
+                new AosCode
+                {
+                    Applicatie = "applicatie WW",
+                    Onderwerp = "Dit is het WW onderwerp",
+                    Subonderwerp = "En het WW subonderwerp"
+                },
+                [Wet.ZW] =
+                new AosCode
+                {
+                    Applicatie = "applicatie ZW",
+                    Onderwerp = "Dit is het ZW onderwerp",
+                    Subonderwerp = "En het ZW subonderwerp"
+                }
+            };
             var aosWettenSetting = new Dictionary<string, string>(
                 StringComparer.OrdinalIgnoreCase)
             {
-                [$"Aos:{Wet.WW}:Applicatie"] = "WW applicatie",
-                [$"Aos:{Wet.WW}:Onderwerp"] = "WW onderwerp",
-                [$"Aos:{Wet.WW}:Subonderwerp"] = "WW subonderwerp",
+                [$"Aos:{Wet.WWF}:Applicatie"] = "WWF applicatie",
+                [$"Aos:{Wet.WWF}:Onderwerp"] = "WWF onderwerp",
+                [$"Aos:{Wet.WWF}:Subonderwerp"] = "WWF subonderwerp",
                 [$"Aos:{Wet.IOW}:Applicatie"] = "IOW applicatie",
                 [$"Aos:{Wet.IOW}:Onderwerp"] = "IOW onderwerp",
                 [$"Aos:{Wet.IOW}:Subonderwerp"] = "IOW subonderwerp",
@@ -55,15 +72,39 @@ namespace CustomProvider.Example.Providers
              aosWettenSetting
              .Select(kvp => new Settings(kvp.Key, kvp.Value))
              .ToArray());
+            context.Settings.AddRange(
+                GetSettingsArray(AosCodes)
+            );
 
             context.SaveChanges();
 
-            return widgetOptionSetting.Merge(aosWettenSetting);
+            return widgetOptionSetting.Merge(aosWettenSetting).Merge(GetDictionary(AosCodes));
+        }
+
+        private static Dictionary<string, string> GetDictionary(AosCodes AosCodes)
+        {
+            return AosCodes.Select(d => new (string, string)[]
+            {
+                ($"Aos:{d.Key}:Applicatie", d.Value.Applicatie),
+                ($"Aos:{d.Key}:Onderwerp" , d.Value.Onderwerp),
+                ($"Aos:{d.Key}:Subonderwerp" , d.Value.Subonderwerp)
+            }).SelectMany(i => i).ToDictionary(a => a.Item1, a => a.Item2, StringComparer.OrdinalIgnoreCase);
+        }
+
+
+        private static Settings[] GetSettingsArray(AosCodes AosCodes)
+        {
+            return AosCodes.Select(d => new Settings[]
+            {
+                new Settings(id: $"Aos:{d.Key}:Applicatie", value: d.Value.Applicatie),
+                new Settings(id: $"Aos:{d.Key}:Onderwerp", value: d.Value.Onderwerp),
+                new Settings(id: $"Aos:{d.Key}:Subonderwerp", value: d.Value.Subonderwerp)
+            }).SelectMany(i => i).ToArray();
         }
     }
 
-    public static class ExtensionMethods 
-    { 
+    public static class ExtensionMethods
+    {
         public static IDictionary<TKey, TValue> Merge<TKey, TValue>(this IDictionary<TKey, TValue> dictA, IDictionary<TKey, TValue> dictB)
             where TValue : class
         {
